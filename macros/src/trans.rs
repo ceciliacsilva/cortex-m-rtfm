@@ -9,8 +9,9 @@ fn krate() -> Ident {
 }
 
 pub fn app(app: &App, ownerships: &Ownerships) -> TokenStream {
+    let krate = krate();
     let mut root = vec![];
-    let mut main = vec![quote!(#![allow(path_statements)])];
+    let mut main = vec![];
 
     ::trans::tasks(app, ownerships, &mut root, &mut main);
     ::trans::init(app, &mut main, &mut root);
@@ -18,8 +19,11 @@ pub fn app(app: &App, ownerships: &Ownerships) -> TokenStream {
     ::trans::resources(app, ownerships, &mut root);
 
     root.push(quote! {
-        #[allow(unsafe_code)]
-        fn main() {
+        use #krate::entry;
+    
+        #[entry]
+        #[allow(path_statements, unsafe_code)]
+        fn main() -> ! {
             #(#main)*
         }
     });
@@ -363,11 +367,19 @@ fn init(app: &App, main: &mut Vec<TokenStream>, root: &mut Vec<TokenStream>) {
 
                 let nr = e.nr();
                 let priority = task.priority;
+                //thumbv6m
                 exceptions.push(quote! {
                     let prio_bits = #device::NVIC_PRIO_BITS;
                     let hw = ((1 << prio_bits) - #priority) << (8 - prio_bits);
-                    scb.shpr[#nr - 4].write(hw);
+                    let pos = (#nr - 8);
+                    scb.shpr[pos].write(hw);
                 });
+                //thumbv7m
+                // exceptions.push(quote! {
+                //     let prio_bits = #device::NVIC_PRIO_BITS;
+                //     let hw = ((1 << prio_bits) - #priority) << (8 - prio_bits);
+                //     scb.shpr[#nr - 4].write(hw);
+                // });
             }
             Kind::Interrupt { enabled } => {
                 // Interrupt. These are enabled / disabled through the NVIC
