@@ -14,7 +14,7 @@ version = "0.3.4"
 
 [dependencies]
 #cortex-m = "0.4.0"
-cortex-m = { git = "https://github.com/ceciliacsilva/cortex-m", version = "0.5.7"}
+cortex-m = { git = "https://github.com/ceciliacsilva/cortex-m", version = "0.5.7" }
 cortex-m-rt = "0.6.4"
 cortex-m-rtfm-macros = { path = "macros", version = "0.3.2" }
 rtfm-core = "0.2.0"
