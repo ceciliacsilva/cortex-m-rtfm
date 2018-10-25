@@ -210,7 +210,7 @@ fn idle(app: &App, ownerships: &Ownerships, main: &mut Vec<TokenStream>, root: &
 
         root.push(quote! {
             #[allow(unsafe_code)]
-            impl core::ops::Deref for #tname::#rname {
+            impl core::ops::Deref for idle::#name {
                 type Target = #ty;
 
                 fn deref(&self) -> &Self::Target {
@@ -219,7 +219,7 @@ fn idle(app: &App, ownerships: &Ownerships, main: &mut Vec<TokenStream>, root: &
             }
 
             #[allow(unsafe_code)]
-            impl core::ops::DerefMut for #tname::#rname {
+            impl core::ops::DerefMut for idle::#name {
                 fn deref_mut(&mut self) -> &mut Self::Target {
                     unsafe { &mut #_static }
                 }
