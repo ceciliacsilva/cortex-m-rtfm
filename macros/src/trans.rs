@@ -207,6 +207,24 @@ fn idle(app: &App, ownerships: &Ownerships, main: &mut Vec<TokenStream>, root: &
                 }
             }
         });
+
+        root.push(quote! {
+            #[allow(unsafe_code)]
+            impl core::ops::Deref for #tname::#rname {
+                type Target = #ty;
+
+                fn deref(&self) -> &Self::Target {
+                    unsafe { &#_static }
+                }
+            }
+
+            #[allow(unsafe_code)]
+            impl core::ops::DerefMut for #tname::#rname {
+                fn deref_mut(&mut self) -> &mut Self::Target {
+                    unsafe { &mut #_static }
+                }
+            }
+        })
     }
 
     if !mod_items.is_empty() {
