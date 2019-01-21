@@ -1,73 +1,62 @@
-//! Working with resources in a generic fashion
+//! examples/generics.rs
+
 #![deny(unsafe_code)]
 #![deny(warnings)]
+#![no_main]
 #![no_std]
 
-extern crate cortex_m_rtfm as rtfm;
-extern crate stm32f103xx;
+extern crate panic_semihosting;
 
-use rtfm::{app, Resource, Threshold};
-use stm32f103xx::{GPIOA, SPI1};
+use cortex_m_semihosting::{debug, hprintln};
+use lm3s6965::Interrupt;
+use rtfm::{app, Mutex};
 
-app! {
-    device: stm32f103xx,
+#[app(device = lm3s6965)]
+const APP: () = {
+    static mut SHARED: u32 = 0;
 
-    resources: {
-        static GPIOA: GPIOA;
-        static SPI1: SPI1;
-    },
-
-    tasks: {
-        EXTI0: {
-            path: exti0,
-            priority: 1,
-            resources: [GPIOA, SPI1],
-        },
-
-        EXTI1: {
-            path: exti1,
-            priority: 2,
-            resources: [GPIOA, SPI1],
-        },
-    },
-}
-
-fn init(p: init::Peripherals) -> init::LateResources {
-    init::LateResources {
-        GPIOA: p.device.GPIOA,
-        SPI1: p.device.SPI1,
+    #[init]
+    fn init() {
+        rtfm::pend(Interrupt::UART0);
+        rtfm::pend(Interrupt::UART1);
     }
-}
 
-fn idle() -> ! {
-    loop {
-        rtfm::wfi();
+    #[interrupt(resources = [SHARED])]
+    fn UART0() {
+        static mut STATE: u32 = 0;
+
+        hprintln!("UART0(STATE = {})", *STATE).unwrap();
+
+        advance(STATE, resources.SHARED);
+
+        rtfm::pend(Interrupt::UART1);
+
+        debug::exit(debug::EXIT_SUCCESS);
     }
-}
 
-// A generic function that uses some resources
-fn work<G, S>(t: &mut Threshold, gpioa: &G, spi1: &S)
-where
-    G: Resource<Data = GPIOA>,
-    S: Resource<Data = SPI1>,
-{
-    gpioa.claim(t, |_gpioa, t| {
-        // drive NSS low
+    #[interrupt(priority = 2, resources = [SHARED])]
+    fn UART1() {
+        static mut STATE: u32 = 0;
 
-        spi1.claim(t, |_spi1, _| {
-            // transfer data
-        });
+        hprintln!("UART1(STATE = {})", *STATE).unwrap();
 
-        // drive NSS high
+        // just to show that `SHARED` can be accessed directly and ..
+        *resources.SHARED += 0;
+        // .. also through a (no-op) `lock`
+        resources.SHARED.lock(|shared| *shared += 0);
+
+        advance(STATE, resources.SHARED);
+    }
+};
+
+fn advance(state: &mut u32, mut shared: impl Mutex<T = u32>) {
+    *state += 1;
+
+    let (old, new) = shared.lock(|shared| {
+        let old = *shared;
+        *shared += *state;
+        (old, *shared)
     });
-}
 
-// This task needs critical sections to access the resources
-fn exti0(t: &mut Threshold, r: EXTI0::Resources) {
-    work(t, &r.GPIOA, &r.SPI1);
-}
-
-// This task has direct access to the resources
-fn exti1(t: &mut Threshold, r: EXTI1::Resources) {
-    work(t, &r.GPIOA, &r.SPI1);
+    hprintln!("SHARED: {} -> {}", old, new).unwrap();
 }

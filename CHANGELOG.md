@@ -5,6 +5,50 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+- Use an absolute link to the book so it works when landing from crates.io
+  documentation page
+
+## [v0.4.0] - 2018-11-03
+
+### Changed
+
+- This crate now compiles on stable 1.31.
+
+- [breaking-change] The `app!` macro has been transformed into an attribute. See
+  the documentation for details.
+
+- [breaking-change] Applications that use this library must be written using the
+  2018 edition.
+
+- [breaking-change] The `Resource` trait has been renamed to `Mutex`.
+  `Resource.claim_mut` has been renamed to `Mutex.lock` and its signature has
+  changed (no `Threshold` token is required).
+
+- [breaking-change] The name of the library has changed to `rtfm`. The package
+  name is still `cortex-m-rtfm`.
+
+- [breaking-change] `cortex_m_rtfm::set_pending` has been renamed to
+  `rtfm::pend`.
+
+### Added
+
+- Software tasks, which can be immediately spawn and scheduled to run in the
+  future.
+
+- `Instant` and `Duration` API.
+
+- Integration with the [`Singleton`] abstraction.
+
+[`Singleton`]: https://docs.rs/owned-singleton/0.1.0/owned_singleton/
+
+### Removed
+
+- [breaking-change] The `Threshold` token has been removed.
+
+- [breaking-change] The `bkpt` and `wfi` re-exports have been removed.
+
+- [breaking-change] `rtfm::atomic` has been removed.
+
 ## [v0.3.4] - 2018-08-27
 
 ### Changed
@@ -106,7 +150,8 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 - Initial release
 
-[Unreleased]: https://github.com/japaric/cortex-m-rtfm/compare/v0.3.4...HEAD
+[Unreleased]: https://github.com/japaric/cortex-m-rtfm/compare/v0.4.0...HEAD
+[v0.4.0]: https://github.com/japaric/cortex-m-rtfm/compare/v0.3.4...v0.4.0
 [v0.3.4]: https://github.com/japaric/cortex-m-rtfm/compare/v0.3.3...v0.3.4
 [v0.3.3]: https://github.com/japaric/cortex-m-rtfm/compare/v0.3.2...v0.3.3
 [v0.3.2]: https://github.com/japaric/cortex-m-rtfm/compare/v0.3.1...v0.3.2
